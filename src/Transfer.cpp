@@ -6,6 +6,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+using namespace std;
+
 // Hàm phụ trợ cho Server: Tính kích thước file hiện tại
 static long getExistingFileSize(const std::string& filepath) {
     std::ifstream file(filepath, std::ios::binary | std::ios::ate);

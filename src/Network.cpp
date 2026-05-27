@@ -4,6 +4,8 @@
 #include <arpa/inet.h>
 #include <sys/socket.h>
 
+using namespace std;
+
 int init_server_socket(int port) {
     int server_fd = socket(AF_INET, SOCK_STREAM, 0);
     int opt = 1;
@@ -15,7 +17,7 @@ int init_server_socket(int port) {
     address.sin_port = htons(port);
 
     if (bind(server_fd, (struct sockaddr*)&address, sizeof(address)) < 0) {
-        std::cerr << "[-] Lỗi Bind Cổng\n";
+        cerr << "[-] Lỗi Bind Cổng\n";
         exit(1);
     }
     listen(server_fd, 5);

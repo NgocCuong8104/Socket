@@ -5,15 +5,17 @@
 #include <unistd.h>
 #include <sys/socket.h>
 
+using namespace std;
+
 int main() {
     int server_fd = init_server_socket(PORT);
-    std::cout << "[*] Server đang lắng nghe trên cổng " << PORT << "...\n";
+    cout << "[*] Server đang lắng nghe trên cổng " << PORT << "...\n";
 
     while (true) {
         int client_socket = accept(server_fd, nullptr, nullptr);
         if (client_socket < 0) continue;
         
-        std::cout << "\n[+] Client đã kết nối.\n";
+        cout << "\n[+] Client đã kết nối.\n";
         
         // Gọi hàm của bạn!
         receiveFileWithResume(client_socket);

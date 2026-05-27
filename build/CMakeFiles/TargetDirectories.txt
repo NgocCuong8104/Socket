@@ -1,0 +1,4 @@
+/home/cuong/Socket/build/CMakeFiles/server_app.dir
+/home/cuong/Socket/build/CMakeFiles/client_app.dir
+/home/cuong/Socket/build/CMakeFiles/edit_cache.dir
+/home/cuong/Socket/build/CMakeFiles/rebuild_cache.dir
