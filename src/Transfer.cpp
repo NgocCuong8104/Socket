@@ -30,7 +30,6 @@ static long getTotalFileSize(const std::string& filepath) {
     return -1;
 }
 
-// ---------------- SERVER LOGIC ----------------
 void receiveFileWithResume(int client_socket) {
     char buffer[BUFFER_SIZE];
     
@@ -69,7 +68,6 @@ void receiveFileWithResume(int client_socket) {
     outfile.close();
 }
 
-// ---------------- CLIENT LOGIC ----------------
 void sendFileWithResume(int server_socket, const std::string& filepath) {
     char buffer[BUFFER_SIZE];
 
@@ -85,7 +83,6 @@ void sendFileWithResume(int server_socket, const std::string& filepath) {
     }
     long offset = std::stol(buffer);
 
-    // 3. Kiểm tra logic: File đã tải xong chưa?
     long total_size = getTotalFileSize(filepath);
     if (total_size == -1) {
         std::cerr << "[-] Lỗi: Không tìm thấy file gốc: " << filepath << "\n";
@@ -99,7 +96,6 @@ void sendFileWithResume(int server_socket, const std::string& filepath) {
     std::cout << "[Client] Tổng dung lượng: " << total_size << " bytes.\n";
     std::cout << "[Client] Server đã có: " << offset << " bytes. Bắt đầu Resume...\n";
 
-    // 4. Mở file và TUA (Seek) đến đúng vị trí Offset
     std::ifstream infile(filepath, std::ios::binary);
     infile.seekg(offset, std::ios::beg);
 
@@ -117,10 +113,9 @@ void sendFileWithResume(int server_socket, const std::string& filepath) {
         }
 
         total_sent += sent;
-        // In ra màn hình tiến độ trên cùng 1 dòng
+
         std::cout << "\r[Client] Tiến độ: " << total_sent << " / " << total_size << " bytes" << std::flush;
         
-        // Cố tình delay 0.05 giây để bạn kịp bấm Ctrl+C khi test
         usleep(50000); 
     }
 

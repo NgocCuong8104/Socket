@@ -1,16 +1,5 @@
 # 📡 Socket File Transfer - Client/Server Project
 
-## 📋 Tổng Quan Dự Án
-
-Đây là một ứng dụng **Truyền File qua Socket TCP** (Client-Server) có hỗ trợ **Resume** - tức là nếu kết nối bị mất, có thể tiếp tục truyền từ vị trí dừng lại mà không cần gửi lại từ đầu.
-
-**Ngôn ngữ:** C (POSIX)  
-**Giao thức:** TCP/IP  
-**Cổng mặc định:** 5001  
-**Kích thước buffer:** 1024 bytes
-
----
-
 ## 🔧 Nguyên Lí Hoạt Động
 
 ### Kiến Trúc
@@ -48,148 +37,133 @@ CLIENT                          SERVER
 
 ---
 
-## 🚀 Cách Vận Hành
+## 🚀 Các Bước Thực Hiện Truyền File
 
-### Bước 1: Chuẩn Bị File Test
+### Bước 1: Biên Dịch Dự Án
 
-Tạo file `test_large_file.txt` trong thư mục dự án:
-
-```bash
-dd if=/dev/zero of=test_large_file.txt bs=1M count=10   # Tạo file 10MB
-```
-
-### Bước 2: Biên Dịch
+Sử dụng CMake để biên dịch:
 
 ```bash
-gcc -o server server.c network.c transfer.c
-gcc -o client client.c network.c transfer.c
+cd /home/cuong/Socket
+mkdir -p build && cd build
+cmake ..
+make
 ```
+
+**Output:**
+```
+[100%] Built target server_app
+[100%] Built target client_app
+```
+
+Hai file executable sẽ được tạo:
+- `build/server_app` - Chương trình server
+- `build/client_app` - Chương trình client
+
+---
+
+### Bước 2: Chuẩn Bị File Test
+
+Trong thư mục `build`, tạo file test để truyền:
+
+```bash
+cd build
+dd if=/dev/zero of=test_file.txt bs=1M count=10   # Tạo file 10MB
+```
+
+---
 
 ### Bước 3: Chạy Server (Terminal 1)
 
+Khởi động server lắng nghe trên cổng 5001:
+
 ```bash
-./server
+cd /home/cuong/Socket/build
+./server_app
 ```
 
-**Output:**
+**Output mong đợi:**
 ```
 [*] Server đang lắng nghe trên cổng 5001...
+[*] Chờ client kết nối...
 ```
+
+---
 
 ### Bước 4: Chạy Client (Terminal 2)
 
+Khởi động client để gửi file:
+
 ```bash
-./client
+cd /home/cuong/Socket/build
+./client_app
 ```
 
-**Output:**
+**Output mong đợi:**
 ```
 [+] Đã kết nối tới Server!
+[*] Gửi tên file: test_file.txt
 [*] Server yêu cầu bắt đầu gửi từ byte: 0
 [*] Đang gửi...
 Đã gửi: 10485760 bytes
 [*] Truyền tải kết thúc.
 ```
 
-### Bước 5: Test Resume (Tính Năng Chính)
-
-1. Chạy client, giữa quá trình gửi → bấm **Ctrl+C** (ngắt kết nối)
-2. Chạy client lại → nó sẽ:
-   - Gửi tên file
-   - Server trả về offset (ví dụ: `5000000`)
-   - Client tiếp tục gửi từ byte thứ 5000001
-   - ✅ File được nhận đầy đủ mà không gửi lại từ đầu
-
----
-
-## 📁 Cấu Trúc File
-
-| File | Mục đích |
-|------|---------|
-| **config.h** | Định nghĩa hằng số: PORT (5001), BUFFER_SIZE (1024) |
-| **network.h** | Khai báo hàm khởi tạo và kết nối socket |
-| **network.c** | Cài đặt: `init_server_socket()`, `connect_to_server()` |
-| **transfer.h** | Khai báo hàm gửi/nhận file |
-| **transfer.c** | Cài đặt logic truyền file với resume |
-| **server.c** | Chương trình server chính - lắng nghe & nhận file |
-| **client.c** | Chương trình client chính - kết nối & gửi file |
-| **README.md** | Tài liệu hướng dẫn (file này) |
-
----
-
-## ⚙️ Tính Năng Chính
-
-✅ **Truyền file qua TCP** - sử dụng socket stream  
-✅ **Hỗ trợ Resume** - tiếp tục từ vị trí dừng lại  
-✅ **Hiển thị tiến độ** - theo dõi bytes đã gửi  
-✅ **Xử lý lỗi kết nối** - phát hiện client ngắt kết nối  
-✅ **Buffer 1024 bytes** - tối ưu cho mạng  
-✅ **Server đa client** - xử lý từng client tuần tự  
-
----
-
-## 📊 Luồng Hoạt Động
-
-### Server Flow
+**Trên Server:**
 ```
-1. init_server_socket(5001)
-   ↓
-2. accept() - chờ client
-   ↓
-3. recv(filename)
-   ↓
-4. get_current_offset() - kiểm tra file tồn tại?
-   ↓
-5. send(offset)
-   ↓
-6. recv(data) - lặp nhận từng chunk
-   ↓
-7. fwrite() - ghi vào file
-   ↓
-8. close() - đóng socket, quay lại bước 2
-```
-
-### Client Flow
-```
-1. connect_to_server("127.0.0.1", 5001)
-   ↓
-2. send(filename)
-   ↓
-3. recv(offset)
-   ↓
-4. fseek(offset) - nhảy tới vị trí
-   ↓
-5. fread() - đọc chunk
-   ↓
-6. send(data) - gửi chunk
-   ↓
-7. Lặp bước 5-6 cho đến hết file
-   ↓
-8. close() - đóng socket
+[+] Client đã kết nối!
+[*] Nhận tên file: test_file.txt
+[*] Offset hiện tại: 0 bytes
+[*] Bắt đầu nhận dữ liệu...
+[+] Truyền tải thành công!
+[*] File được lưu: received_test_file.txt
 ```
 
 ---
 
-## 🐛 Tính Năng Nâng Cao (Có Thể Thêm)
+### Bước 5: Test Tính Năng Resume (Điểm Chính)
 
-- [ ] Hiển thị tốc độ truyền (bytes/second)
-- [ ] Hỗ trợ truyền nhiều file cùng lúc (threading)
-- [ ] Mã hóa truyền (SSL/TLS)
-- [ ] Xác thực client
-- [ ] Báo cáo lỗi chi tiết hơn
-- [ ] Hỗ trợ IPv6
+**Mục đích:** Kiểm tra khả năng tiếp tục truyền sau khi bị ngắt kết nối
+
+**Quy trình:**
+
+1. **Chạy client, sau đó ngắt giữa quá trình:**
+   - Khởi động client (Terminal 2)
+   - Chờ vài giây, bấm **Ctrl+C** để ngắt kết nối
+   - Quan sát: Server phát hiện client ngắt và quay lại chờ client mới
+
+2. **Chạy client lại:**
+   - Gõ `./client_app` lại trong Terminal 2
+   - **Kết quả mong đợi:**
+     ```
+     [*] Server yêu cầu bắt đầu gửi từ byte: 5242880
+     ```
+     (Nếu đã truyền 5MB, client sẽ được yêu cầu tiếp tục từ byte 5242880, không phải từ 0)
+
+3. **File được nhận đầy đủ:**
+   - Trong thư mục `build`, kiểm tra file `received_test_file.txt`
+   - Kích thước: 10485760 bytes (đầy đủ)
+   - ✅ Truyền hoàn thành mà **không cần gửi lại từ đầu**
 
 ---
 
-## 📝 Lưu Ý
+## 📁 Cấu Trúc Dự Án
 
-- Server chỉ xử lý 1 client mỗi lần (tuần tự)
-- File nhận được được lưu với tiền tố `received_`
-- Nếu client bị ngắt, offset vẫn giữ nguyên cho lần kết nối tiếp theo
-- Buffer size 1024 bytes có thể tăng để truyền nhanh hơn (cần chỉnh CONFIG_H)
-
----
-
-**Tác giả:** Dự án Socket File Transfer  
-**Ngày tạo:** 2026  
-**Phiên bản:** 1.0
+```
+Socket/
+├── CMakeLists.txt          # Cấu hình CMake
+├── README.md               # Tài liệu này
+├── include/                # Thư mục header
+│   ├── Config.hpp
+│   ├── Network.hpp
+│   └── Transfer.hpp
+├── src/                    # Thư mục source
+│   ├── server.cpp
+│   ├── client.cpp
+│   ├── Network.cpp
+│   └── Transfer.cpp
+└── build/                  # Thư mục build (được tạo sau khi chạy cmake)
+    ├── server_app          # Executable server
+    ├── client_app          # Executable client
+    └── received_*.txt      # File nhận được
+```
